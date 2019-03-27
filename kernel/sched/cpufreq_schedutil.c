@@ -577,6 +577,9 @@ static ssize_t up_rate_limit_us_store(struct gov_attr_set *attr_set,
 	if (task_is_booster(current))
 		return count;
 
+	/* Don't let userspace change this */
+	return count;
+
 	if (kstrtouint(buf, 10, &rate_limit_us))
 		return -EINVAL;
 
@@ -599,6 +602,9 @@ static ssize_t down_rate_limit_us_store(struct gov_attr_set *attr_set,
 
 	if (task_is_booster(current))
 		return count;
+
+	/* Don't let userspace change this */
+	return count;
 
 	if (kstrtouint(buf, 10, &rate_limit_us))
 		return -EINVAL;
@@ -909,6 +915,10 @@ static int sugov_init(struct cpufreq_policy *policy)
 	tunables->down_rate_limit_us = 0;
 	tunables->hispeed_load = DEFAULT_HISPEED_LOAD;
 	tunables->hispeed_freq = 0;
+
+	/* Hard-code some sane rate-limit values */
+	tunables->up_rate_limit_us = 10000;
+	tunables->down_rate_limit_us = 20000;
 
 	tunables->iowait_boost_enable = false;
 
