@@ -99,7 +99,7 @@ static ssize_t adrenoboost_save(struct device *dev,
 {
 	int input;
 	sscanf(buf, "%d ", &input);
-	if (input < 0 || input > 3) {
+	if (input < 0 || input > 4) {
 		adrenoboost = 0;
 	} else {
 		adrenoboost = input;
@@ -390,6 +390,34 @@ static inline int devfreq_get_freq_level(struct devfreq *devfreq,
 }
 
 static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq, u32 *flag)
+
+#if 1
+
+// mapping gpu level calculated linear conservation half curve values into a
+// bell curve of conservation  (lower is higher freq level)
+static int conservation_map_up[] = {15,15,10,4,5,6,12     ,5,5,5};
+static int conservation_map_down[] = {0,1,6,6,5,0,0     ,5,5,5};
+
+// make boost multiplication/division depending on current lvl, dampen the high freq up scaling! (lower is higher freq level)
+static int lvl_multiplicator_map_1[] = {5,5,6,8,9,1,1    ,1,1};
+static int lvl_divider_map_1[] = {10,10,10,10,10,1,1    ,1,1};
+
+// for boost == 2 -- boost divide on the low spectrum, dampen the lower freq values, unneeded to boost the low freq spectrum so much at start
+static int lvl_multiplicator_map_2[] = {6,7,8,1,1,1,1    ,1,1};
+static int lvl_divider_map_2[] = {10,10,10,1,1,1,1    ,1,1};
+
+// for boost == 3 -- boost divide on the low spectrum, dampen the lower freq values, unneeded to boost the low freq spectrum so much at start
+static int lvl_multiplicator_map_3[] = {9,1,1,1,1,10,8    ,1,1};
+static int lvl_divider_map_3[] = {10,1,1,1,1,14,12    ,1,1};
+
+// for boost == 4 -- idk, but i got more performance with this :p
+static int lvl_multiplicator_map_4[] = {10,1,1,1,1,11,9    ,1,1};
+static int lvl_divider_map_4[] = {10,1,1,1,1,15,13    ,1,1};
+
+#endif
+
+static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
+
 {
 	int result = 0;
 	struct devfreq_msm_adreno_tz_data *priv = devfreq->data;
@@ -423,8 +451,23 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq, u32 
 	priv->bin.total_time += stats.total_time;
 #if 1
 	// scale busy time up based on adrenoboost parameter, only if MIN_BUSY exceeded...
+	
 	if ((unsigned int)(priv->bin.busy_time + stats.busy_time) >= MIN_BUSY) {
 		priv->bin.busy_time += stats.busy_time * (1 + (adrenoboost*3)/2);
+
+//	if ((unsigned int)(priv->bin.busy_time + stats.busy_time) >= MIN_BUSY && adrenoboost) {
+	if (adrenoboost) {
+		if (adrenoboost == 1) {
+			priv->bin.busy_time += (unsigned int)((stats.busy_time * ( 1 + adrenoboost ) * lvl_multiplicator_map_1[ last_level ]) / lvl_divider_map_1[ last_level ]);
+		} else
+		if (adrenoboost == 2) {
+			priv->bin.busy_time += (unsigned int)((stats.busy_time * ( 1 + adrenoboost ) * lvl_multiplicator_map_2[ last_level ]  * 7 ) / (lvl_divider_map_2[ last_level ] * 10));
+		} else 
+		if (adrenoboost == 3) {
+			priv->bin.busy_time += (unsigned int)((stats.busy_time * ( 1 + adrenoboost ) * lvl_multiplicator_map_3[ last_level ]  * 8 ) / (lvl_divider_map_3[ last_level ] * 10));
+		} else {
+			priv->bin.busy_time += (unsigned int)((stats.busy_time * ( 1 + adrenoboost ) * lvl_multiplicator_map_4[ last_level ]  * 9 ) / (lvl_divider_map_4[ last_level ] * 10));
+		}
 	} else {
 		priv->bin.busy_time += stats.busy_time;
 	}
