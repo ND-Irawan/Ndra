@@ -11,6 +11,9 @@ COMPILER=clang
 LINKER=""
 COMPILERDIR="/workspace/-dra/proton-clang"
 
+#clean
+rm -rf out/outputs/*
+
 # Outputs
 mkdir out/outputs
 mkdir out/outputs/${PHONE}
@@ -18,7 +21,7 @@ mkdir out/outputs/${PHONE}/10.3.7-SE
 
 # Export shits
 export KBUILD_BUILD_USER=Ndraa
-export KBUILD_BUILD_HOST=Nd15
+export KBUILD_BUILD_HOST=1507
 
 # Speed up build process
 MAKE="./makeparallel"
@@ -77,11 +80,11 @@ then
     Build
     if [ $? -ne 0 ]
       then
-        echo "Build failed"
-        rm -rf out/outputs/${PHONE}/10.3.7-SE/*
+          echo "Build failed"
+          rm -rf out/outputs/${PHONE}/10.3.7-SE/*
       else
-        echo "Build succesful"
-        cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/10.3.7-SE/Image.gz-dtb
+          echo "Build succesful"
+          cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/10.3.7-SE/Image.gz-dtb
     Build_lld
     fi
 fi
