@@ -9,7 +9,7 @@ SUBARCH="arm64"
 DEFCONFIG=nd_defconfig
 COMPILER=clang
 LINKER=""
-COMPILERDIR="/workspace/Kernel-F1/proton-clang"
+COMPILERDIR="/workspace/-dra/proton-clang"
 
 # Outputs
 mkdir out/outputs
@@ -76,14 +76,14 @@ then
     cp arch/arm64/boot/dts/qcom/SE_NSE/SE/* arch/arm64/boot/dts/qcom/
     Build
     if [ $? -ne 0 ]
-        then
+      then
         echo "Build failed"
-            rm -rf out/outputs/${PHONE}/10.3.7-SE/*
-        else
+        rm -rf out/outputs/${PHONE}/10.3.7-SE/*
+      else
         echo "Build succesful"
         cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/10.3.7-SE/Image.gz-dtb
-else
     Build_lld
+    fi
 fi
 
 BUILD_END=$(date +"%s")
