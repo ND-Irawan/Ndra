@@ -82,7 +82,6 @@ then
       else
         echo "Build succesful"
         cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/10.3.7-SE/Image.gz-dtb
-else
     Build_lld
     fi
 fi
