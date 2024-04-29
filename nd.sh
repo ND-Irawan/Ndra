@@ -11,9 +11,6 @@ COMPILER=clang
 LINKER=""
 COMPILERDIR="/workspace/-dra/proton-clang"
 
-#clean
-rm -rf out/outputs/*
-
 # Outputs
 mkdir out/outputs
 mkdir out/outputs/${PHONE}
