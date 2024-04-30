@@ -295,6 +295,7 @@
 		< MHZ_TO_MBPS(600, 16) >, /*  9155 MB/s */
 		< MHZ_TO_MBPS(806, 16) >, /* 12298 MB/s */
 		< MHZ_TO_MBPS(933, 16) >; /* 14236 MB/s */
+		< MHZ_TO_MBPS(1016, 16) >; /* 16186 MB/s */
 };
 
 &devfreq_cpufreq {
@@ -558,7 +559,7 @@
 
 		qcom,gpu-pwrlevel@0 {
 			reg = <0>;
-			qcom,gpu-freq = <825000000>;
+			qcom,gpu-freq = <820000000>;
 			qcom,bus-freq = <12>;
 			qcom,bus-min = <12>;
 			qcom,bus-max = <12>;
@@ -568,7 +569,7 @@
 			reg = <1>;
 			qcom,gpu-freq = <810000000>;
 			qcom,bus-freq = <12>;
-			qcom,bus-min = <11>;
+			qcom,bus-min = <12>;
 			qcom,bus-max = <12>;
 		};
 
@@ -614,7 +615,7 @@
 
 		qcom,gpu-pwrlevel@7 {
 			reg = <7>;
-			qcom,gpu-freq = <160000000>;
+			qcom,gpu-freq = <155000000>;
 			qcom,bus-freq = <3>;
 			qcom,bus-min = <2>;
 			qcom,bus-max = <4>;
