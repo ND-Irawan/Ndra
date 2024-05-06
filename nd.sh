@@ -6,7 +6,6 @@
 ARCH="arm64"
 SUBARCH="arm64"
 DEFCONFIG=nd_defconfig
-COMPILER=clang
 LINKER=""
 COMPILERDIR="/root/proton-clang"
 
