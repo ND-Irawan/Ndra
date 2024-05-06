@@ -3,18 +3,16 @@
 # Many parts of this script were taken from @REIGNZ, @idkwhoiam322 and @raphielscape . Huge thanks to them.
 
 # Some general variables
-PHONE="beryllium"
 ARCH="arm64"
 SUBARCH="arm64"
 DEFCONFIG=nd_defconfig
 COMPILER=clang
 LINKER=""
-COMPILERDIR="/workspace/-dra/proton-clang"
+COMPILERDIR="/root/proton-clang"
 
 # Outputs
-mkdir out/outputs
-mkdir out/outputs/${PHONE}
-mkdir out/outputs/${PHONE}/10.3.7-SE
+mkdir out/Ndra
+mkdir out/Ndra/SE
 
 # Export shits
 export KBUILD_BUILD_USER=πdraa
@@ -81,7 +79,7 @@ then
           rm -rf out/outputs/${PHONE}/10.3.7-SE/*
       else
           echo "Build succesful"
-          cp out/arch/arm64/boot/Image.gz-dtb out/outputs/${PHONE}/10.3.7-SE/Image.gz-dtb
+          cp out/arch/arm64/boot/Image.gz-dtb out/Ndra/SE/Image.gz-dtb
     Build_lld
     fi
 fi
