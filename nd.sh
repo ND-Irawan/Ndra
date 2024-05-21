@@ -56,7 +56,6 @@ then
 else
     echo "Build succesful"
     cp out/arch/arm64/boot/Image.gz-dtb out/Ndra/Image.gz-dtb
-   fi
 fi
 
 END=$(date +"%s")
