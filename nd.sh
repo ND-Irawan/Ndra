@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DEFCONFIG="ndra_defconfig"
+DEFCONFIG="nd_defconfig"
 CLANGDIR="/workspace/build/clang19"
 
 #
