@@ -9,7 +9,7 @@ SUBARCH="arm64"
 DEFCONFIG=nd_defconfig
 COMPILER=clang
 LINKER=""
-COMPILERDIR="/workspace/-dra/proton-clang"
+COMPILERDIR="/workspace/build/proton-clang"
 
 # Outputs
 mkdir out/outputs
