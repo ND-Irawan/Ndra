@@ -46,7 +46,7 @@ CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 }
 
 #RUN
-cp Ndra/sdm845-xiaomi-common.dtsi arch/arm64/boot/dts/qcom/
+cp Ndra/Nd/* arch/arm64/boot/dts/qcom/
 cp Ndra/Gpu/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
 cp Ndra/Gpu/gpucc-sdm845.c drivers/clk/qcom/
 nd 2>&1 | tee -a compile.log
