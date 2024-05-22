@@ -12,8 +12,8 @@ mkdir out/Ndra
 
 
 #
-export KBUILD_BUILD_USER=ꪀdra
-export KBUILD_BUILD_HOST=1507
+export KBUILD_BUILD_USER=Son
+export KBUILD_BUILD_HOST=Ndra
 export PATH="$CLANGDIR/bin:$PATH"
 
 #
