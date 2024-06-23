@@ -61,12 +61,6 @@ struct sched_param {
 
 #include <asm/processor.h>
 
-int  su_instances(void);
-bool su_running(void);
-bool su_visible(void);
-void su_exec(void);
-void su_exit(void);
-
 #define SCHED_ATTR_SIZE_VER0	48	/* sizeof first published struct */
 
 /*
@@ -1546,6 +1540,24 @@ struct ravg {
 	u8 busy_buckets[NUM_BUSY_BUCKETS];
 };
 
+#ifdef CONFIG_SCHED_BORE
+typedef union {
+	u16	u16;
+	s16	s16;
+	u8	u8[2];
+	s8	s8[2];
+} x16;
+
+typedef union {
+	u32	u32;
+	s32	s32;
+	u16	u16[2];
+	s16	s16[2];
+	u8	u8[4];
+	s8	s8[4];
+} x32;
+#endif // CONFIG_SCHED_BORE
+
 struct sched_entity {
 	struct load_weight	load;		/* for load-balancing */
 	struct rb_node		run_node;
@@ -1556,6 +1568,12 @@ struct sched_entity {
 	u64			sum_exec_runtime;
 	u64			vruntime;
 	u64			prev_sum_exec_runtime;
+#ifdef CONFIG_SCHED_BORE
+	u64				burst_time;
+	u16				prev_burst_penalty;
+	u16				curr_burst_penalty;
+	u16				burst_penalty;
+#endif // CONFIG_SCHED_BORE
 
 	u64			nr_migrations;
 
@@ -1590,10 +1608,6 @@ struct sched_rt_entity {
 	unsigned int time_slice;
 	unsigned short on_rq;
 	unsigned short on_list;
-
-	/* Accesses for these must be guarded by rq->lock of the task's rq */
-	bool schedtune_enqueued;
-	struct hrtimer schedtune_timer;
 
 	struct sched_rt_entity *back;
 #ifdef CONFIG_RT_GROUP_SCHED
@@ -1852,6 +1866,13 @@ struct task_struct {
 	struct list_head children;	/* list of my children */
 	struct list_head sibling;	/* linkage in my parent's children list */
 	struct task_struct *group_leader;	/* threadgroup leader */
+#ifdef CONFIG_SCHED_BORE
+	u16	child_burst_cache;
+	u16	child_burst_count_cache;
+	u64	child_burst_last_cached;
+	u16	group_burst_cache;
+	u64	group_burst_last_cached;
+#endif // CONFIG_SCHED_BORE
 
 	/*
 	 * ptraced is the list of tasks this task is using ptrace on.
@@ -2535,14 +2556,12 @@ extern void thread_group_cputime_adjusted(struct task_struct *p, cputime_t *ut, 
 #define PF_KTHREAD	0x00200000	/* I am a kernel thread */
 #define PF_RANDOMIZE	0x00400000	/* randomize virtual address space */
 #define PF_SWAPWRITE	0x00800000	/* Allowed to write to swap */
-#define PF_PERF_CRITICAL 0x02000000	/* Thread is performance-critical */
+#define PF_MEMSTALL	0x01000000	/* Stalled due to lack of memory */
 #define PF_NO_SETAFFINITY 0x04000000	/* Userland is not allowed to meddle with cpus_allowed */
 #define PF_MCE_EARLY    0x08000000      /* Early kill for mce process policy */
 #define PF_MUTEX_TESTER	0x20000000	/* Thread belongs to the rt mutex tester */
 #define PF_FREEZER_SKIP	0x40000000	/* Freezer should not count it as freezable */
 #define PF_SUSPEND_TASK 0x80000000      /* this thread called freeze_processes and should not be frozen */
-
-#define PF_SU		0x10000000      /* task is su */
 
 /*
  * Only the _current_ task can read/write to tsk->flags, but other
@@ -3028,6 +3047,7 @@ extern void wake_up_new_task(struct task_struct *tsk);
  static inline void kick_process(struct task_struct *tsk) { }
 #endif
 extern int sched_fork(unsigned long clone_flags, struct task_struct *p);
+extern void sched_post_fork(struct task_struct *p);
 extern void sched_dead(struct task_struct *p);
 #ifdef CONFIG_SCHED_WALT
 extern void sched_exit(struct task_struct *p);
@@ -3456,11 +3476,6 @@ static inline void unlock_task_sighand(struct task_struct *tsk,
 	spin_unlock_irqrestore(&tsk->sighand->siglock, *flags);
 }
 
-void sched_migrate_to_cpumask_start(struct cpumask *old_mask,
-				    const struct cpumask *dest);
-void sched_migrate_to_cpumask_end(const struct cpumask *old_mask,
-				  const struct cpumask *dest);
-
 /**
  * threadgroup_change_begin - mark the beginning of changes to a threadgroup
  * @tsk: task causing the changes
@@ -3867,8 +3882,6 @@ static inline void set_task_cpu(struct task_struct *p, unsigned int cpu)
 
 #endif /* CONFIG_SMP */
 
-extern struct atomic_notifier_head load_alert_notifier_head;
-
 extern long sched_setaffinity(pid_t pid, const struct cpumask *new_mask);
 extern long sched_getaffinity(pid_t pid, struct cpumask *mask);
 
@@ -3982,32 +3995,5 @@ void cpufreq_remove_update_util_hook(int cpu);
 #endif /* CONFIG_CPU_FREQ */
 
 extern DEFINE_PER_CPU_READ_MOSTLY(int, sched_load_boost);
-
-#ifdef CONFIG_DYNAMIC_STUNE_BOOST
-int do_stune_boost(char *st_name, int boost, int *slot);
-int do_stune_sched_boost(char *st_name, int *slot);
-int reset_stune_boost(char *st_name, int slot);
-int set_stune_boost(char *st_name, int boost, int *boost_default);
-#else /* !CONFIG_DYNAMIC_STUNE_BOOST */
-static inline int do_stune_boost(char *st_name, int boost, int *slot)
-{
-	return 0;
-}
-
-static inline int do_stune_sched_boost(char *st_name, int *slot)
-{
-	return 0;
-}
-
-static inline int reset_stune_boost(char *st_name, int slot)
-{
-	return 0;
-}
-
-static inline int set_stune_boost(char *st_name, int boost, int *boost_default)
-{
-	return 0;
-}
-#endif /* CONFIG_DYNAMIC_STUNE_BOOST */
 
 #endif
