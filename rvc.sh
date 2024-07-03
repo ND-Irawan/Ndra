@@ -9,10 +9,18 @@ rm -rf compile.log
 #
 mkdir -p out
 mkdir out/RvKernel
-mkdir out/RvKernel/SE_Stock
-mkdir out/RvKernel/NSE_Stock
-mkdir out/RvKernel/SE_OC
-mkdir out/RvKernel/NSE_OC
+mkdir out/RvKernel/NSE_Stock_old_driver
+mkdir out/RvKernel/NSE_Stock_new_driver
+mkdir out/RvKernel/NSE_800_old_driver
+mkdir out/RvKernel/NSE_800_new_driver
+mkdir out/RvKernel/NSE_835_old_driver
+mkdir out/RvKernel/NSE_835_new_driver
+mkdir out/RvKernel/SE_Stock_old_driver
+mkdir out/RvKernel/SE_Stock_new_driver
+mkdir out/RvKernel/SE_800_old_driver
+mkdir out/RvKernel/SE_800_new_driver
+mkdir out/RvKernel/SE_835_old_driver
+mkdir out/RvKernel/SE_835_new_driver
 
 
 #
@@ -49,57 +57,198 @@ CROSS_COMPILE=aarch64-linux-gnu- \
 CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 }
 
-#SE Stock
-cp RvKernel/SE/* arch/arm64/boot/dts/qcom/
+nse_stock_old_driver() {
+cp RvKernel/NSE/* arch/arm64/boot/dts/qcom/
 cp RvKernel/STOCK/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
 cp RvKernel/STOCK/gpucc-sdm845.c drivers/clk/qcom/
+cp RvKernel/fw-touch-9.1.24/* firmware/
 rve 2>&1 | tee -a compile.log
-if [ $? -ne 0 ]
-then
-    echo "Build failed"
-else
-    echo "Build succesful"
-    cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/SE_Stock/Image.gz-dtb
-    
-    #NSE Stock
-    cp RvKernel/NSE/* arch/arm64/boot/dts/qcom/
-    cp RvKernel/STOCK/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
-    cp RvKernel/STOCK/gpucc-sdm845.c drivers/clk/qcom/
-    rve
     if [ $? -ne 0 ]
     then
         echo "Build failed"
     else
         echo "Build succesful"
-        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/NSE_Stock/Image.gz-dtb
-        
-        #SE Overclock
-        cp RvKernel/SE/* arch/arm64/boot/dts/qcom/
-        cp RvKernel/OC/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
-        cp RvKernel/OC/gpucc-sdm845.c drivers/clk/qcom/
-        rve
-        if [ $? -ne 0 ]
-        then
-            echo "Build failed"
-        else
-            echo "Build succesful"
-            cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/SE_OC/Image.gz-dtb
-            
-            #NSE Overclock
-            cp RvKernel/NSE/* arch/arm64/boot/dts/qcom/
-            cp RvKernel/OC/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
-            cp RvKernel/OC/gpucc-sdm845.c drivers/clk/qcom/
-            rve
-            if [ $? -ne 0 ]
-            then
-                echo "Build failed"
-            else
-                echo "Build succesful"
-                cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/NSE_OC/Image.gz-dtb
-            fi
-        fi
+        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/NSE_Stock_old_driver/Image.gz-dtb
     fi
-fi
+}
+
+nse_stock_new_driver() {
+cp RvKernel/NSE/* arch/arm64/boot/dts/qcom/
+cp RvKernel/STOCK/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
+cp RvKernel/STOCK/gpucc-sdm845.c drivers/clk/qcom/
+cp RvKernel/fw-touch-10.3.7/* firmware/
+rve
+    if [ $? -ne 0 ]
+    then
+        echo "Build failed"
+    else
+        echo "Build succesful"
+        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/NSE_Stock_new_driver/Image.gz-dtb
+    fi
+}
+
+nse_800_old_driver() {
+cp RvKernel/NSE/* arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/800/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/800/gpucc-sdm845.c drivers/clk/qcom/
+cp RvKernel/fw-touch-9.1.24/* firmware/
+rve
+    if [ $? -ne 0 ]
+    then
+        echo "Build failed"
+    else
+        echo "Build succesful"
+        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/NSE_800_old_driver/Image.gz-dtb
+    fi
+}
+
+nse_800_new_driver() {
+cp RvKernel/NSE/* arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/800/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/800/gpucc-sdm845.c drivers/clk/qcom/
+cp RvKernel/fw-touch-10.3.7/* firmware/
+rve
+    if [ $? -ne 0 ]
+    then
+        echo "Build failed"
+    else
+        echo "Build succesful"
+        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/NSE_800_new_driver/Image.gz-dtb
+    fi
+}
+
+nse_835_old_driver() {
+cp RvKernel/NSE/* arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/835/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/835/gpucc-sdm845.c drivers/clk/qcom/
+cp RvKernel/fw-touch-9.1.24/* firmware/
+rve
+    if [ $? -ne 0 ]
+    then
+        echo "Build failed"
+    else
+        echo "Build succesful"
+        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/NSE_835_old_driver/Image.gz-dtb
+    fi
+}
+
+nse_835_new_driver() {
+cp RvKernel/NSE/* arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/835/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/835/gpucc-sdm845.c drivers/clk/qcom/
+cp RvKernel/fw-touch-10.3.7/* firmware/
+rve
+    if [ $? -ne 0 ]
+    then
+        echo "Build failed"
+    else
+        echo "Build succesful"
+        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/NSE_835_new_driver/Image.gz-dtb
+    fi
+}
+
+se_stock_old_driver() {
+cp RvKernel/SE/* arch/arm64/boot/dts/qcom/
+cp RvKernel/STOCK/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
+cp RvKernel/STOCK/gpucc-sdm845.c drivers/clk/qcom/
+cp RvKernel/fw-touch-9.1.24/* firmware/
+rve
+    if [ $? -ne 0 ]
+    then
+        echo "Build failed"
+    else
+        echo "Build succesful"
+        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/SE_Stock_old_driver/Image.gz-dtb
+    fi
+}
+
+se_stock_new_driver() {
+cp RvKernel/SE/* arch/arm64/boot/dts/qcom/
+cp RvKernel/STOCK/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
+cp RvKernel/STOCK/gpucc-sdm845.c drivers/clk/qcom/
+cp RvKernel/fw-touch-10.3.7/* firmware/
+rve
+    if [ $? -ne 0 ]
+    then
+        echo "Build failed"
+    else
+        echo "Build succesful"
+        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/SE_Stock_new_driver/Image.gz-dtb
+    fi
+}
+
+se_800_old_driver() {
+cp RvKernel/SE/* arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/800/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/800/gpucc-sdm845.c drivers/clk/qcom/
+cp RvKernel/fw-touch-9.1.24/* firmware/
+rve
+    if [ $? -ne 0 ]
+    then
+        echo "Build failed"
+    else
+        echo "Build succesful"
+        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/SE_800_old_driver/Image.gz-dtb
+    fi
+}
+
+se_800_new_driver() {
+cp RvKernel/SE/* arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/800/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/800/gpucc-sdm845.c drivers/clk/qcom/
+cp RvKernel/fw-touch-10.3.7/* firmware/
+rve
+    if [ $? -ne 0 ]
+    then
+        echo "Build failed"
+    else
+        echo "Build succesful"
+        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/SE_800_new_driver/Image.gz-dtb
+    fi
+}
+
+se_835_old_driver() {
+cp RvKernel/SE/* arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/835/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/835/gpucc-sdm845.c drivers/clk/qcom/
+cp RvKernel/fw-touch-9.1.24/* firmware/
+rve
+    if [ $? -ne 0 ]
+    then
+        echo "Build failed"
+    else
+        echo "Build succesful"
+        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/SE_835_old_driver/Image.gz-dtb
+    fi
+}
+
+se_835_new_driver() {
+cp RvKernel/SE/* arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/835/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
+cp RvKernel/OC/835/gpucc-sdm845.c drivers/clk/qcom/
+cp RvKernel/fw-touch-10.3.7/* firmware/
+rve
+    if [ $? -ne 0 ]
+    then
+        echo "Build failed"
+    else
+        echo "Build succesful"
+        cp out/arch/arm64/boot/Image.gz-dtb out/RvKernel/SE_835_new_driver/Image.gz-dtb
+    fi
+}
+
+nse_stock_old_driver
+nse_stock_new_driver
+nse_800_old_driver
+nse_800_new_driver
+nse_835_old_driver
+nse_835_new_driver
+se_stock_old_driver
+se_stock_new_driver
+se_800_old_driver
+se_800_new_driver
+se_835_old_driver
+se_835_new_driver
 
 END=$(date +"%s")
 DIFF=$(($END - $START))
