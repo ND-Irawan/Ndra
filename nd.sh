@@ -9,7 +9,7 @@ rm -rf compile.log
 
 #
 mkdir -p out
-mkdir out/ND
+mkdir out/Ndra
 
 
 #
@@ -47,17 +47,17 @@ CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 }
 
 #Run
-cp ND/SE/* arch/arm64/boot/dts/qcom/
-cp ND/GPU/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
-cp ND/GPU/gpucc-sdm845.c drivers/clk/qcom/
-cp ND/10.3.7/* firmware/
+cp Ndra/SE/* arch/arm64/boot/dts/qcom/
+cp Ndra/GPU/sdm845-v2.dtsi arch/arm64/boot/dts/qcom/
+cp Ndra/GPU/gpucc-sdm845.c drivers/clk/qcom/
+cp Ndra/10.3.7/* firmware/
 nd 2>&1 | tee -a compile.log
 if [ $? -ne 0 ]
 then
     echo "Build failed"
 else
     echo "Build succesful"
-    cp out/arch/arm64/boot/Image.gz-dtb out/ND/Image.gz-dtb
+    cp out/arch/arm64/boot/Image.gz-dtb out/Ndra/Image.gz-dtb
 fi
 
 END=$(date +"%s")
