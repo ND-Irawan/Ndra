@@ -13,8 +13,8 @@ mkdir out/Ndra
 
 
 #
-export KBUILD_BUILD_USER=Ndrα
-export KBUILD_BUILD_HOST=ND-Irαwαn
+export KBUILD_BUILD_USER=Ndra
+export KBUILD_BUILD_HOST=ND-Irawan
 export PATH="$CLANGDIR/bin:$PATH"
 
 #
