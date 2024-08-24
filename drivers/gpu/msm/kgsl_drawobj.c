@@ -44,14 +44,6 @@ static struct kmem_cache *memobjs_cache;
 static struct kmem_cache *sparseobjs_cache;
 
 static void free_fence_names(struct kgsl_drawobj_sync *syncobj)
-
-static struct kmem_cache *timeline_cache;
-static struct kmem_cache *sparse_cache;
-static struct kmem_cache *sync_cache;
-static struct kmem_cache *cmd_cache;
-
-static void syncobj_destroy_object(struct kgsl_drawobj *drawobj)
-
 {
 	unsigned int i;
 
@@ -61,24 +53,6 @@ static void syncobj_destroy_object(struct kgsl_drawobj *drawobj)
 		if (event->type == KGSL_CMD_SYNCPOINT_TYPE_FENCE)
 			kfree(event->info.fences);
 	}
-
-	kmem_cache_free(syncobj->synclist);
-	kmem_cache_free(sync_cache, syncobj);
-}
-
-static void cmdobj_destroy_object(struct kgsl_drawobj *drawobj)
-{
-	kmem_cache_free(cmd_cache, CMDOBJ(drawobj));
-}
-
-static void timelineobj_destroy_object(struct kgsl_drawobj *drawobj)
-{
-	kmem_cache_free(timeline_cache, TIMELINEOBJ(drawobj));
-}
-
-static void sparseobj_destroy_object(struct kgsl_drawobj *drawobj)
-{
-	kmem_cache_free(sparse_cache, SPARSEOBJ(drawobj));
 }
 
 void kgsl_drawobj_destroy_object(struct kref *kref)
@@ -721,92 +695,6 @@ static void *_drawobj_create(struct kgsl_device *device,
 	drawobj->type = type;
 
 	return obj;
-	return 0;
-}
-
-struct kgsl_drawobj_timeline *
-kgsl_drawobj_timeline_create(struct kgsl_device *device,
-		struct kgsl_context *context)
-{
-	int ret;
-	struct kgsl_drawobj_timeline *timelineobj =
-		kmem_cache_zalloc(timeline_cache, GFP_KERNEL);
-
-	if (!timelineobj)
-		return ERR_PTR(-ENOMEM);
-
-	ret = drawobj_init(device, context, &timelineobj->base,
-		TIMELINEOBJ_TYPE);
-	if (ret) {
-		kmem_cache_free(timeline_cache, timelineobj);
-		return ERR_PTR(ret);
-	}
-
-	timelineobj->base.destroy = timelineobj_destroy;
-	timelineobj->base.destroy_object = timelineobj_destroy_object;
-
-	return timelineobj;
-}
-
-int kgsl_drawobj_add_timeline(struct kgsl_device_private *dev_priv,
-		struct kgsl_drawobj_timeline *timelineobj,
-		void __user *src, u64 cmdsize)
-{
-	struct kgsl_gpu_aux_command_timeline cmd;
-	int i, ret;
-
-	if (copy_struct_from_user(&cmd, sizeof(cmd), src, cmdsize))
-		return -EFAULT;
-
-	if (!cmd.count)
-		return -EINVAL;
-
-	timelineobj->timelines = kvcalloc(cmd.count,
-		sizeof(*timelineobj->timelines),
-		GFP_KERNEL | __GFP_NORETRY | __GFP_NOWARN);
-	if (!timelineobj->timelines)
-		return -ENOMEM;
-
-	src = u64_to_user_ptr(cmd.timelines);
-
-	for (i = 0; i < cmd.count; i++) {
-		struct kgsl_timeline_val val;
-
-		if (copy_struct_from_user(&val, sizeof(val), src,
-			cmd.timelines_size)) {
-			ret = -EFAULT;
-			goto err;
-		}
-
-		if (val.padding) {
-			ret = -EINVAL;
-			goto err;
-		}
-
-		timelineobj->timelines[i].timeline =
-			kgsl_timeline_by_id(dev_priv->device,
-				val.timeline);
-
-		if (!timelineobj->timelines[i].timeline) {
-			ret = -ENODEV;
-			goto err;
-		}
-
-		trace_kgsl_drawobj_timeline(val.timeline, val.seqno);
-		timelineobj->timelines[i].seqno = val.seqno;
-
-		src += cmd.timelines_size;
-	}
-
-	timelineobj->count = cmd.count;
-	return 0;
-err:
-	for (i = 0; i < cmd.count; i++)
-		kgsl_timeline_put(timelineobj->timelines[i].timeline);
-
-	kvfree(timelineobj->timelines);
-	timelineobj->timelines = NULL;
-	return ret;
 }
 
 /**
@@ -821,30 +709,11 @@ struct kgsl_drawobj_sparse *kgsl_drawobj_sparse_create(
 		struct kgsl_device *device,
 		struct kgsl_context *context, unsigned int flags)
 {
-
 	struct kgsl_drawobj_sparse *sparseobj = _drawobj_create(device,
 		context, sizeof(*sparseobj), SPARSEOBJ_TYPE);
 
 	if (!IS_ERR(sparseobj))
 		INIT_LIST_HEAD(&sparseobj->sparselist);
-	int ret;
-	struct kgsl_drawobj_sparse *sparseobj =
-			kmem_cache_zalloc(sparse_cache, GFP_KERNEL);
-
-	if (!sparseobj)
-		return ERR_PTR(-ENOMEM);
-
-	ret = drawobj_init(device,
-		context, &sparseobj->base, SPARSEOBJ_TYPE);
-	if (ret) {
-		kmem_cache_free(sparse_cache, sparseobj);
-		return ERR_PTR(ret);
-	}
-
-	INIT_LIST_HEAD(&sparseobj->sparselist);
-
-	sparseobj->base.destroy = drawobj_destroy_sparse;
-	sparseobj->base.destroy_object = sparseobj_destroy_object;
 
 	return sparseobj;
 }
@@ -867,23 +736,6 @@ struct kgsl_drawobj_sync *kgsl_drawobj_sync_create(struct kgsl_device *device,
 	if (!IS_ERR(syncobj))
 		setup_timer(&syncobj->timer, syncobj_timer,
 				(unsigned long) syncobj);
-	struct kgsl_drawobj_sync *syncobj =
-		kmem_cache_zalloc(sync_cache, GFP_KERNEL);
-	int ret;
-
-	if (!syncobj)
-		return ERR_PTR(-ENOMEM);
-
-	ret = drawobj_init(device, context, &syncobj->base, SYNCOBJ_TYPE);
-	if (ret) {
-		kmem_cache_free(sync_cache, syncobj);
-		return ERR_PTR(ret);
-	}
-
-	syncobj->base.destroy = syncobj_destroy;
-	syncobj->base.destroy_object = syncobj_destroy_object;
-
-	timer_setup(&syncobj->timer, syncobj_timer, 0);
 
 	return syncobj;
 }
@@ -918,19 +770,6 @@ struct kgsl_drawobj_cmd *kgsl_drawobj_cmd_create(struct kgsl_device *device,
 
 		INIT_LIST_HEAD(&cmdobj->cmdlist);
 		INIT_LIST_HEAD(&cmdobj->memlist);
-
-	struct kgsl_drawobj_cmd *cmdobj =
-		kmem_cache_zalloc(cmd_cache, GFP_KERNEL);
-	int ret;
-
-	if (!cmdobj)
-		return ERR_PTR(-ENOMEM);
-
-	ret = drawobj_init(device, context, &cmdobj->base,
-		(type & (CMDOBJ_TYPE | MARKEROBJ_TYPE)));
-	if (ret) {
-		kmem_cache_free(cmd_cache, cmdobj);
-		return ERR_PTR(ret);
 	}
 
 	return cmdobj;
@@ -1310,25 +1149,14 @@ void kgsl_drawobjs_cache_exit(void)
 {
 	kmem_cache_destroy(memobjs_cache);
 	kmem_cache_destroy(sparseobjs_cache);
-
-	kmem_cache_destroy(timeline_cache);
-	kmem_cache_destroy(sparse_cache);
-	kmem_cache_destroy(sync_cache);
-	kmem_cache_destroy(cmd_cache);
 }
 
 int kgsl_drawobjs_cache_init(void)
 {
-	memobjs_cache = KMEM_CACHE(kgsl_memobj_node, SLAB_HWCACHE_ALIGN);
-	sparseobjs_cache = KMEM_CACHE(kgsl_sparseobj_node, SLAB_HWCACHE_ALIGN);
+	memobjs_cache = KMEM_CACHE(kgsl_memobj_node, 0);
+	sparseobjs_cache = KMEM_CACHE(kgsl_sparseobj_node, 0);
 
-	timeline_cache = KMEM_CACHE(kgsl_drawobj_timeline, SLAB_HWCACHE_ALIGN);
-	sparse_cache = KMEM_CACHE(kgsl_drawobj_sparse, SLAB_HWCACHE_ALIGN);
-	sync_cache = KMEM_CACHE(kgsl_drawobj_sync, SLAB_HWCACHE_ALIGN);
-	cmd_cache = KMEM_CACHE(kgsl_drawobj_cmd, SLAB_HWCACHE_ALIGN);
-
-	if (!memobjs_cache || !sparseobjs_cache ||
-		!timeline_cache || !sparse_cache || !sync_cache || !cmd_cache)
+	if (!memobjs_cache || !sparseobjs_cache)
 		return -ENOMEM;
 
 	return 0;
