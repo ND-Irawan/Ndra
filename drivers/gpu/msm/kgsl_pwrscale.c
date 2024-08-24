@@ -800,7 +800,7 @@ int kgsl_pwrscale_init(struct device *dev, const char *governor)
 
 	/* if there is only 1 freq, no point in running a governor */
 	if (profile->max_state == 1)
-		governor = "performance";
+		governor = "msm-adreno-tz";
 
 	/* initialize msm-adreno-tz governor specific data here */
 	data = gpu_profile->private_data;
