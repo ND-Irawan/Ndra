@@ -3374,6 +3374,59 @@ int ext4_dax_get_block(struct inode *inode, sector_t iblock,
 		return ret;
 
 	if (buffer_unwritten(bh_result)) {
+
+	map.m_lblk = first_block;
+	map.m_len = last_block - first_block + 1;
+
+	if (flags & IOMAP_REPORT) {
+		ret = ext4_map_blocks(NULL, inode, &map, 0);
+		if (ret < 0)
+			return ret;
+
+		if (ret == 0) {
+			ext4_lblk_t end = map.m_lblk + map.m_len - 1;
+			struct extent_status es;
+
+			ext4_es_find_delayed_extent_range(inode, map.m_lblk, end, &es);
+
+			if (!es.es_len || es.es_lblk > end) {
+				/* entire range is a hole */
+			} else if (es.es_lblk > map.m_lblk) {
+				/* range starts with a hole */
+				map.m_len = es.es_lblk - map.m_lblk;
+			} else {
+				ext4_lblk_t offs = 0;
+
+				if (es.es_lblk < map.m_lblk)
+					offs = map.m_lblk - es.es_lblk;
+				map.m_lblk = es.es_lblk + offs;
+				map.m_len = es.es_len - offs;
+				delalloc = true;
+			}
+		}
+	} else if (flags & IOMAP_WRITE) {
+		int dio_credits;
+		handle_t *handle;
+		int retries = 0;
+
+		/*
+		 * We check here if the blocks are already allocated, then we
+		 * don't need to start a journal txn and we can directly return
+		 * the mapping information. This could boost performance
+		 * especially in multi-threaded overwrite requests.
+		 */
+		if (offset + length <= i_size_read(inode)) {
+			ret = ext4_map_blocks(NULL, inode, &map, 0);
+			if (ret > 0 && (map.m_flags & EXT4_MAP_MAPPED))
+				goto out;
+		}
+
+		/* Trim mapping request to maximum we can map at once for DIO */
+		if (map.m_len > DIO_MAX_BLOCKS)
+			map.m_len = DIO_MAX_BLOCKS;
+		dio_credits = ext4_chunk_trans_blocks(inode, map.m_len);
+retry:
+
 		/*
 		 * We are protected by i_mmap_sem or i_mutex so we know block
 		 * cannot go away from under us even though we dropped
@@ -3385,6 +3438,8 @@ int ext4_dax_get_block(struct inode *inode, sector_t iblock,
 		if (ret < 0)
 			return ret;
 	}
+out:
+
 	/*
 	 * At least for now we have to clear BH_New so that DAX code
 	 * doesn't attempt to zero blocks again in a racy way.
