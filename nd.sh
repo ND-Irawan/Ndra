@@ -1,7 +1,7 @@
 #!/bin/sh
 
 DEFCONFIG="ndra_defconfig"
-CLANGDIR="/workspace/build/clang"
+CLANGDIR="/workspace/Ndra_Build/clang"
 
 #
 rm -rf out
