@@ -41,6 +41,9 @@
 
 static const int LZ4_minLength = (MFLIMIT + 1);
 static const int LZ4_64Klimit = ((64 * KB) + (MFLIMIT - 1));
+static const U32 LZ4_skipTrigger = 6;
+
+LZ4_stream_t *LZ4_initStream(void *buffer, size_t size);
 
 /*-******************************
  *	Compression functions
@@ -96,8 +99,57 @@ static void LZ4_putPositionOnHash(
 	const BYTE *srcBase)
 {
 	switch (tableType) {
-	case byPtr:
-	{
+	default: /* fallthrough */
+	case clearedTable: { /* illegal! */
+		assert(0);
+		return;
+	}
+	case byPtr: {
+		const BYTE **hashTable = (const BYTE **)tableBase;
+		hashTable[h] = NULL;
+		return;
+	}
+	case byU32: {
+		U32 *hashTable = (U32 *)tableBase;
+		hashTable[h] = 0;
+		return;
+	}
+	case byU16: {
+		U16 *hashTable = (U16 *)tableBase;
+		hashTable[h] = 0;
+		return;
+	}
+	}
+}
+static FORCE_INLINE void LZ4_putIndexOnHash(U32 idx, U32 h, void *tableBase,
+					    tableType_t const tableType)
+{
+	switch (tableType) {
+	default: /* fallthrough */
+	case clearedTable: /* fallthrough */
+	case byPtr: { /* illegal! */
+		assert(0);
+		return;
+	}
+	case byU32: {
+		U32 *hashTable = (U32 *)tableBase;
+		hashTable[h] = idx;
+		return;
+	}
+	case byU16: {
+		U16 *hashTable = (U16 *)tableBase;
+		assert(idx < 65536);
+		hashTable[h] = (U16)idx;
+		return;
+	}
+	}
+}
+static void LZ4_putPositionOnHash(const BYTE *p, U32 h, void *tableBase,
+				  tableType_t const tableType,
+				  const BYTE *srcBase)
+{
+	switch (tableType) {
+	case byPtr: {
 		const BYTE **hashTable = (const BYTE **)tableBase;
 
 		hashTable[h] = p;
@@ -131,11 +183,32 @@ static FORCE_INLINE void LZ4_putPosition(
 	LZ4_putPositionOnHash(p, h, tableBase, tableType, srcBase);
 }
 
-static const BYTE *LZ4_getPositionOnHash(
-	U32 h,
-	void *tableBase,
-	tableType_t tableType,
-	const BYTE *srcBase)
+/* LZ4_getIndexOnHash() :
+ * Index of match position registered in hash table.
+ * hash position must be calculated by using base+index, or dictBase+index.
+ * Assumption 1 : only valid if tableType == byU32 or byU16.
+ * Assumption 2 : h is presumed valid (within limits of hash table)
+ */
+static FORCE_INLINE U32 LZ4_getIndexOnHash(U32 h, const void *tableBase,
+					   tableType_t tableType)
+{
+	LZ4_STATIC_ASSERT(LZ4_MEMORY_USAGE > 2);
+	if (tableType == byU32) {
+		const U32 *const hashTable = (const U32 *)tableBase;
+		assert(h < (1U << (LZ4_MEMORY_USAGE - 2)));
+		return hashTable[h];
+	}
+	if (tableType == byU16) {
+		const U16 *const hashTable = (const U16 *)tableBase;
+		assert(h < (1U << (LZ4_MEMORY_USAGE - 1)));
+		return hashTable[h];
+	}
+	assert(0);
+	return 0; /* forbidden case */
+}
+static const BYTE *LZ4_getPositionOnHash(U32 h, void *tableBase,
+					 tableType_t tableType,
+					 const BYTE *srcBase)
 {
 	if (tableType == byPtr) {
 		const BYTE **hashTable = (const BYTE **) tableBase;
@@ -168,11 +241,48 @@ static FORCE_INLINE const BYTE *LZ4_getPosition(
 	return LZ4_getPositionOnHash(h, tableBase, tableType, srcBase);
 }
 
+static FORCE_INLINE void LZ4_prepareTable(LZ4_stream_t_internal *const cctx,
+					  const int inputSize,
+					  const tableType_t tableType)
+{
+	/* If the table hasn't been used, it's guaranteed to be zeroed out, and is
+     * therefore safe to use no matter what mode we're in. Otherwise, we figure
+     * out if it's safe to leave as is or whether it needs to be reset.
+     */
+	if ((tableType_t)cctx->tableType != clearedTable) {
+		assert(inputSize >= 0);
+		if ((tableType_t)cctx->tableType != tableType ||
+		    ((tableType == byU16) &&
+		     cctx->currentOffset + (unsigned)inputSize >= 0xFFFFU) ||
+		    ((tableType == byU32) && cctx->currentOffset > 1 * GB) ||
+		    tableType == byPtr || inputSize >= 4 * KB) {
+			DEBUGLOG(4, "LZ4_prepareTable: Resetting table in %p",
+				 cctx);
+			memset(cctx->hashTable, 0, LZ4_HASHTABLESIZE);
+			cctx->currentOffset = 0;
+			cctx->tableType = (U32)clearedTable;
+		} else {
+			DEBUGLOG(
+				4,
+				"LZ4_prepareTable: Re-use hash table (no reset)");
+		}
+	}
 
-/*
- * LZ4_compress_generic() :
- * inlined, to ensure branches are decided at compilation time
- */
+    /* Adding a gap, so all previous entries are > LZ4_DISTANCE_MAX back,
+     * is faster than compressing without a gap.
+     * However, compressing with currentOffset == 0 is faster still,
+     * so we preserve that case.
+     */
+	if (cctx->currentOffset != 0 && tableType == byU32) {
+		DEBUGLOG(5, "LZ4_prepareTable: adding 64KB to currentOffset");
+		cctx->currentOffset += 64 * KB;
+	}
+	/* Finally, clear history */
+	cctx->dictCtx = NULL;
+	cctx->dictionary = NULL;
+	cctx->dictSize = 0;
+}
+
 static FORCE_INLINE int LZ4_compress_generic(
 	LZ4_stream_t_internal * const dictPtr,
 	const char * const source,
