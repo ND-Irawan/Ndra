@@ -291,10 +291,10 @@
 		< MHZ_TO_MBPS(150, 16) >,
 		< MHZ_TO_MBPS(300, 16) >,
 		< MHZ_TO_MBPS(426, 16) >,
-		< MHZ_TO_MBPS(580, 16) >,
-		< MHZ_TO_MBPS(820, 16) >,
-		< MHZ_TO_MBPS(935, 16) >,
-		< MHZ_TO_MBPS(1050, 16) >;
+		< MHZ_TO_MBPS(540, 16) >,
+		< MHZ_TO_MBPS(670, 16) >,
+		< MHZ_TO_MBPS(855, 16) >,
+		< MHZ_TO_MBPS(995, 16) >;
 };
 
 &devfreq_cpufreq {
@@ -463,7 +463,7 @@
 			2476800 46806
 			2553600 58045
 			2649600 64686
-			2803200 98450
+			2803200 96450
 		>;
 		idle-cost-data = <
 			100 80 60 20
@@ -547,7 +547,7 @@
 
 		qcom,gpu-pwrlevel@0 {
 			reg = <0>;
-			qcom,gpu-freq = <820000000>;
+			qcom,gpu-freq = <810000000>;
 			qcom,bus-freq = <12>;
 			qcom,bus-min = <12>;
 			qcom,bus-max = <12>;
@@ -571,7 +571,7 @@
 
 		qcom,gpu-pwrlevel@3 {
 			reg = <3>;
-			qcom,gpu-freq = <560000000>;
+			qcom,gpu-freq = <540000000>;
 			qcom,bus-freq = <10>;
 			qcom,bus-min = <9>;
 			qcom,bus-max = <12>;
