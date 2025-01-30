@@ -1,9 +1,6 @@
 #!/bin/bash
 #set -e
 ## Copy this script inside the kernel directory
-LINKER="lld"
-DIR=$(readlink -f .)
-MAIN=$(readlink -f ${DIR}/..)
 export PATH="$MAIN/clang/bin:$PATH"
 export ARCH=arm64
 export SUBARCH=arm64
@@ -17,17 +14,6 @@ mkdir out/Ndra
 
 export KBUILD_BUILD_USER=ND
 export KBUILD_BUILD_HOST=Irawan
-
-KERNEL_DIR=$(pwd)
-ZIMAGE_DIR="$KERNEL_DIR/out/arch/arm64/boot"
-# Speed up build process
-MAKE="./makeparallel"
-BUILD_START=$(date +"%s")
-blue='\033[0;34m'
-cyan='\033[0;36m'
-yellow='\033[0;33m'
-red='\033[0;31m'
-nocol='\033[0m'
 
 # Function to revert modifications
 
