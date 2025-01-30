@@ -7,8 +7,8 @@ rm -rf compile.log
 mkdir -p out
 mkdir out/Ndra
 
-export KBUILD_BUILD_USER=ND
-export KBUILD_BUILD_HOST=Irawan
+export KBUILD_BUILD_USER=Ndrα
+export KBUILD_BUILD_HOST=Irαwαn
 export PATH="$CLANGDIR/bin:$PATH"
 
 make O=out ARCH=arm64 vendor/alioth_defconfig
