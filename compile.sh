@@ -11,7 +11,7 @@ export KBUILD_BUILD_USER=ND
 export KBUILD_BUILD_HOST=Irawan
 export PATH="$CLANGDIR/bin:$PATH"
 
-make O=out ARCH=arm64 alioth_defconfig
+make O=out ARCH=arm64 vendor/alioth_defconfig
 
 nd () {
 make -j$(nproc --all) O=out LLVM=1 LLVM_IAS=1 \
