@@ -6,12 +6,6 @@ export ARCH=arm64
 export SUBARCH=arm64
 CLANGDIR="/workspace/build/clang"
 
-rm -rf out
-rm -rf compile.log
-
-mkdir -p out
-mkdir out/Ndra
-
 export KBUILD_BUILD_USER=ND
 export KBUILD_BUILD_HOST=Irawan
 
@@ -71,7 +65,6 @@ fi
 make $KERNEL_DEFCONFIG O=out CC=clang
 make -j$(nproc --all) O=out LLVM=1 LLVM_IAS=1 \
 ARCH=arm64 \
-CC=clang \
 LD=ld.lld \
 AR=llvm-ar \
 AS=llvm-as \
