@@ -73,6 +73,8 @@
 
 		#cooling-cells = <2>;
 		qcom,tzone-names = "gpuss-0-usr", "gpuss-1-usr";
+		
+		qcom,pm-qos-active-latency = <44>;
 
 		clocks = <&clock_gpucc GPU_CC_CXO_CLK>,
 			<&clock_gcc GCC_DDRSS_GPU_AXI_CLK>,
@@ -125,7 +127,7 @@
 				<26 512 0 MHZ_TO_KBPS(1353, 4)>, /* index=8  */
 				<26 512 0 MHZ_TO_KBPS(1555, 4)>, /* index=9  */
 				<26 512 0 MHZ_TO_KBPS(1804, 4)>, /* index=10 */
-				<26 512 0 MHZ_TO_KBPS(2492, 4)>; /* index=11 */
+				<26 512 0 MHZ_TO_KBPS(2592, 4)>; /* index=11 */
 		};
 
 		qcom,gpu-bus-table-1 {
@@ -146,7 +148,7 @@
 				<26 512 0 MHZ_TO_KBPS(1555, 4)>, /* index=8  */
 				<26 512 0 MHZ_TO_KBPS(1804, 4)>, /* index=9  */
 				<26 512 0 MHZ_TO_KBPS(2092, 4)>, /* index=10 */
-				<26 512 0 MHZ_TO_KBPS(3236, 4)>; /* index=11 */
+				<26 512 0 MHZ_TO_KBPS(3436, 4)>; /* index=11 */
 		};
 
 		qcom,l3-pwrlevels {
