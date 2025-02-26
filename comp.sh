@@ -8,7 +8,7 @@ export KBUILD_BUILD_USER=ND
 export KBUILD_BUILD_HOST=ndrα_irαwαn
 export PATH="$CLANGDIR/bin:$PATH"
 
-make O=out ARCH=arm64 elegy_defconfig
+make O=out ARCH=arm64 rvkernel-alioth_defconfig
 
 nd () {
 make -j$(nproc --all) O=out LLVM=1 LLVM_IAS=1 \
