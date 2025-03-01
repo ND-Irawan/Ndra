@@ -4,7 +4,7 @@ CLANGDIR="/workspace/Compile/Clang"
 rm -rf out
 rm -rf compile.log
 
-export KBUILD_BUILD_USER=ND
+export KBUILD_BUILD_USER=irwn
 export KBUILD_BUILD_HOST=ndrα_irαwαn
 export PATH="$CLANGDIR/bin:$PATH"
 
