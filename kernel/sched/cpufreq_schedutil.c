@@ -190,6 +190,9 @@ static bool sugov_update_next_freq(struct sugov_policy *sg_policy, u64 time,
 		sg_policy->cached_raw_freq = sg_policy->prev_cached_raw_freq;
 		return false;
 	}
+	
+	if (sg_policy->next_freq > next_freq)
+ 		next_freq = (sg_policy->next_freq + next_freq) >> 1;
 
 	sg_policy->next_freq = next_freq;
 	sg_policy->last_freq_update_time = time;
