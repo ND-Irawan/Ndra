@@ -689,8 +689,7 @@ static signed long drm_syncobj_array_wait_timeout(struct drm_syncobj **syncobjs,
 						  uint32_t count,
 						  uint32_t flags,
 						  signed long timeout,
-						  uint32_t *idx,
-						  ktime_t *deadline)
+						  uint32_t *idx)
 {
 	struct syncobj_wait_entry *entries;
 	struct dma_fence *fence;
@@ -753,15 +752,6 @@ static signed long drm_syncobj_array_wait_timeout(struct drm_syncobj **syncobjs,
 							      &entries[i].fence,
 							      &entries[i].syncobj_cb,
 							      syncobj_wait_syncobj_func);
-		}
-	}
-
-	if (deadline) {
-		for (i = 0; i < count; ++i) {
-			fence = entries[i].fence;
-			if (!fence)
-				continue;
-			dma_fence_set_deadline(fence, *deadline);
 		}
 	}
 
@@ -860,8 +850,7 @@ static signed long drm_timeout_abs_to_jiffies(int64_t timeout_nsec)
 static int drm_syncobj_array_wait(struct drm_device *dev,
 				  struct drm_file *file_private,
 				  struct drm_syncobj_wait *wait,
-				  struct drm_syncobj **syncobjs,
-				  ktime_t *deadline)
+				  struct drm_syncobj **syncobjs)
 {
 	signed long timeout = drm_timeout_abs_to_jiffies(wait->timeout_nsec);
 	signed long ret = 0;
@@ -870,8 +859,7 @@ static int drm_syncobj_array_wait(struct drm_device *dev,
 	ret = drm_syncobj_array_wait_timeout(syncobjs,
 					     wait->count_handles,
 					     wait->flags,
-					     timeout, &first,
-						 deadline);
+					     timeout, &first);
 	if (ret < 0)
 		return ret;
 
@@ -943,22 +931,17 @@ drm_syncobj_wait_ioctl(struct drm_device *dev, void *data,
 {
 	struct drm_syncobj_wait *args = data;
 	struct drm_syncobj **syncobjs;
-	unsigned int possible_flags;
-	ktime_t t, *tp = NULL;
 	int ret = 0;
 
 	if (!drm_core_check_feature(dev, DRIVER_SYNCOBJ))
 		return -ENODEV;
 
-	possible_flags = DRM_SYNCOBJ_WAIT_FLAGS_WAIT_ALL |
-			    DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT|
-				DRM_SYNCOBJ_WAIT_FLAGS_WAIT_DEADLINE;
-
-	if (args->flags & ~possible_flags)
+	if (args->flags & ~(DRM_SYNCOBJ_WAIT_FLAGS_WAIT_ALL |
+			    DRM_SYNCOBJ_WAIT_FLAGS_WAIT_FOR_SUBMIT))
 		return -EINVAL;
 
 	if (args->count_handles == 0)
-		return 0;
+		return -EINVAL;
 
 	ret = drm_syncobj_array_find(file_private,
 				     u64_to_user_ptr(args->handles),
@@ -967,13 +950,8 @@ drm_syncobj_wait_ioctl(struct drm_device *dev, void *data,
 	if (ret < 0)
 		return ret;
 
-	if (args->flags & DRM_SYNCOBJ_WAIT_FLAGS_WAIT_DEADLINE) {
-		t = ns_to_ktime(args->deadline_nsec);
-		tp = &t;
-	}
-
 	ret = drm_syncobj_array_wait(dev, file_private,
-				     args, syncobjs, tp);
+				     args, syncobjs);
 
 	drm_syncobj_array_free(syncobjs, args->count_handles);
 
